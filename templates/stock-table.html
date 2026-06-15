@@ -1,0 +1,175 @@
+<template id="tpl-stock">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <p class="eyebrow">Manajemen Stok</p>
+        <h2>Daftar Stok Bahan Ajar</h2>
+      </div>
+      <button
+        type="button"
+        class="btn primary"
+        @click="showForm ? cancelEdit() : openCreateForm()"
+      >
+        {{ showForm ? 'Tutup Form' : '+ Tambah Bahan Ajar' }}
+      </button>
+    </div>
+
+    <div class="filters grid-4">
+      <label
+        >UT-Daerah
+        <select v-model="filters.upbjj">
+          <option value="">Semua UT-Daerah</option>
+          <option v-for="u in upbjjList" :key="u" :value="u">{{ u }}</option>
+        </select>
+      </label>
+      <label v-show="filters.upbjj"
+        >Kategori
+        <select v-model="filters.kategori">
+          <option value="">Semua Kategori</option>
+          <option v-for="k in kategoriOptions" :key="k" :value="k">
+            {{ k }}
+          </option>
+        </select>
+      </label>
+      <label
+        >Sort
+        <select v-model="sortBy">
+          <option value="judul">Judul</option>
+          <option value="qty">Stok</option>
+          <option value="harga">Harga</option>
+        </select>
+      </label>
+      <label class="check"
+        ><input type="checkbox" v-model="filters.reorderOnly" /> Re-order</label
+      >
+      <button type="button" class="btn ghost" @click="resetFilter">
+        Reset Filter
+      </button>
+    </div>
+
+    <form v-show="showForm" class="form-card" @submit.prevent="saveForm">
+      <h3>
+        {{ editKodeLama === null ? 'Tambah Data Baru' : 'Update Data Bahan Ajar'
+        }}
+      </h3>
+      <p class="hint">
+        Tekan tombol <strong>Simpan</strong> atau tekan
+        <strong>Enter</strong> pada input untuk menyimpan data.
+      </p>
+      <div class="grid-4">
+        <input
+          ref="kodeInput"
+          v-model.trim="form.kode"
+          @keyup.enter.prevent="saveForm"
+          placeholder="Kode MK"
+        />
+        <input
+          v-model.trim="form.judul"
+          @keyup.enter.prevent="saveForm"
+          placeholder="Nama Mata Kuliah"
+        />
+        <select v-model="form.kategori" @keyup.enter.prevent="saveForm">
+          <option value="">Pilih Kategori</option>
+          <option v-for="k in kategoriList" :key="k" :value="k">{{ k }}</option>
+        </select>
+        <select v-model="form.upbjj" @keyup.enter.prevent="saveForm">
+          <option value="">Pilih UT-Daerah</option>
+          <option v-for="u in upbjjList" :key="u" :value="u">{{ u }}</option>
+        </select>
+        <input
+          v-model.trim="form.lokasiRak"
+          @keyup.enter.prevent="saveForm"
+          placeholder="Lokasi Rak"
+        />
+        <input
+          v-model.number="form.harga"
+          @keyup.enter.prevent="saveForm"
+          type="number"
+          min="0"
+          placeholder="Harga"
+        />
+        <input
+          v-model.number="form.qty"
+          @keyup.enter.prevent="saveForm"
+          type="number"
+          min="0"
+          placeholder="Jumlah Stok"
+        />
+        <input
+          v-model.number="form.safety"
+          @keyup.enter.prevent="saveForm"
+          type="number"
+          min="0"
+          placeholder="Safety Stock"
+        />
+      </div>
+      <textarea
+        v-model.trim="form.catatanHTML"
+        placeholder="Catatan HTML, contoh: <strong>Cover baru</strong>"
+      ></textarea>
+      <p class="error" v-if="error">{{ error }}</p>
+      <div class="actions">
+        <button class="btn primary" type="submit">Simpan</button>
+        <button class="btn ghost" type="button" @click="cancelEdit">
+          Batal
+        </button>
+      </div>
+    </form>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kode/Nama MK</th>
+            <th>Kategori</th>
+            <th>UT-Daerah</th>
+            <th>Rak</th>
+            <th>Harga</th>
+            <th>Qty</th>
+            <th>Safety</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, index) in filteredItems" :key="item.kode + index">
+            <td>
+              <strong>{{ item.kode }}</strong><span>{{ item.judul }}</span>
+            </td>
+            <td>{{ item.kategori }}</td>
+            <td>{{ item.upbjj }}</td>
+            <td>{{ item.lokasiRak }}</td>
+            <td>{{ item.harga | rupiah }}</td>
+            <td>{{ item.qty | satuanBuah }}</td>
+            <td>{{ item.safety | satuanBuah }}</td>
+            <td class="status-cell">
+              <status-badge
+                :qty="Number(item.qty)"
+                :safety="Number(item.safety)"
+              ></status-badge>
+              <div
+                class="tooltip"
+                v-html="item.catatanHTML || 'Tidak ada catatan.'"
+              ></div>
+            </td>
+            <td>
+              <button type="button" class="icon" @click="editItem(item)">
+                Edit
+              </button>
+              <button
+                type="button"
+                class="icon danger"
+                @click="$emit('delete', item)"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+          <tr v-if="filteredItems.length === 0">
+            <td colspan="9" class="empty">Data tidak ditemukan.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
