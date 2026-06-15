@@ -1,0 +1,93 @@
+<template id="tpl-order">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <p class="eyebrow">Pemesanan</p>
+        <h2>Buat Delivery Order Baru</h2>
+      </div>
+      <span class="pill">Nomor otomatis: {{ nextDo }}</span>
+    </div>
+    <form class="form-card" @submit.prevent="submitOrder">
+      <div class="grid-2">
+        <input
+          v-model.trim="form.nim"
+          @keyup.enter.prevent="submitOrder"
+          placeholder="NIM"
+        /><input
+          v-model.trim="form.nama"
+          @keyup.enter.prevent="submitOrder"
+          placeholder="Nama Mahasiswa"
+        />
+        <select v-model="form.ekspedisi" @keyup.enter.prevent="submitOrder">
+          <option value="">Pilih Ekspedisi</option>
+          <option v-for="e in pengirimanList" :key="e.kode" :value="e.nama">
+            {{ e.kode }} - {{ e.nama }}
+          </option>
+        </select>
+        <input type="date" v-model="form.tanggalKirim" />
+        <select v-model="form.paket" @keyup.enter.prevent="submitOrder">
+          <option value="">Pilih Paket Bahan Ajar</option>
+          <option v-for="p in paket" :key="p.kode" :value="p.kode">
+            {{ p.kode }} - {{ p.nama }}
+          </option>
+        </select>
+        <input
+          :value="selectedPaket ? $options.filters.rupiah(selectedPaket.harga) : ''"
+          disabled
+          placeholder="Total Harga Otomatis"
+        />
+      </div>
+      <div v-if="selectedPaket" class="package-detail">
+        <h4>Detail Isi Paket</h4>
+        <p>
+          {{ selectedPaket.nama }} berisi:
+          <strong>{{ selectedPaket.isi.join(', ') }}</strong>
+        </p>
+        <p>Total: <strong>{{ selectedPaket.harga | rupiah }}</strong></p>
+      </div>
+      <p class="error" v-if="error">{{ error }}</p>
+      <button class="btn primary" type="submit">Simpan Delivery Order</button>
+      <p class="success" v-if="lastCreatedDo">
+        DO {{ lastCreatedDo }} berhasil dibuat dan otomatis masuk ke menu
+        Tracking DO.
+      </p>
+    </form>
+
+    <div class="ordered-section">
+      <div class="panel-head compact">
+        <div>
+          <p class="eyebrow">Riwayat Pemesanan</p>
+          <h3>Data yang Sudah Memesan DO</h3>
+        </div>
+        <span class="pill">{{ orderedList.length }} DO</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nomor DO</th>
+              <th>NIM / Nama</th>
+              <th>Paket</th>
+              <th>Ekspedisi</th>
+              <th>Status</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in orderedList" :key="item.nomor">
+              <td><strong>{{ item.nomor }}</strong></td>
+              <td>
+                <strong>{{ item.data.nim }}</strong
+                ><span>{{ item.data.nama }}</span>
+              </td>
+              <td>{{ getPaketName(item.data.paket) }}</td>
+              <td>{{ item.data.ekspedisi }}</td>
+              <td><span class="pill small">{{ item.data.status }}</span></td>
+              <td>{{ item.data.total | rupiah }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</template>
