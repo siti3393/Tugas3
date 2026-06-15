@@ -1,0 +1,164 @@
+<template id="tpl-tracking">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <p class="eyebrow">Tracking Delivery Order</p>
+        <h2>Cari Status Pengiriman</h2>
+      </div>
+      <button
+        type="button"
+        class="btn primary"
+        @click="showDoForm = !showDoForm"
+      >
+        {{ showDoForm ? 'Tutup Form DO' : '+ Tambah Delivery Order' }}
+      </button>
+    </div>
+
+    <div class="search-box">
+      <input
+        v-model.trim="keyword"
+        @keyup.enter="doSearch"
+        @keyup.esc="clearSearch"
+        placeholder="Masukkan Nomor DO atau NIM, lalu tekan Enter"
+      />
+      <button type="button" class="btn primary" @click="doSearch">Cari</button>
+      <button type="button" class="btn ghost" @click="clearSearch">
+        Reset / Esc
+      </button>
+    </div>
+
+    <form v-show="showDoForm" class="form-card" @submit.prevent="submitOrder">
+      <div class="panel-head compact">
+        <div>
+          <p class="eyebrow">Input DO Baru</p>
+          <h3>Nomor otomatis: {{ nextDo }}</h3>
+        </div>
+      </div>
+      <div class="grid-2">
+        <input
+          v-model.trim="form.nim"
+          @keyup.enter.prevent="submitOrder"
+          placeholder="NIM"
+        />
+        <input
+          v-model.trim="form.nama"
+          @keyup.enter.prevent="submitOrder"
+          placeholder="Nama Mahasiswa"
+        />
+        <select v-model="form.ekspedisi" @keyup.enter.prevent="submitOrder">
+          <option value="">Pilih Ekspedisi</option>
+          <option v-for="e in pengirimanList" :key="e.kode" :value="e.nama">
+            {{ e.kode }} - {{ e.nama }}
+          </option>
+        </select>
+        <input type="date" v-model="form.tanggalKirim" />
+        <select v-model="form.paket" @keyup.enter.prevent="submitOrder">
+          <option value="">Pilih Paket Bahan Ajar</option>
+          <option v-for="p in paket" :key="p.kode" :value="p.kode">
+            {{ p.kode }} - {{ p.nama }}
+          </option>
+        </select>
+        <input
+          :value="selectedPaket ? $options.filters.rupiah(selectedPaket.harga) : ''"
+          disabled
+          placeholder="Total Harga Otomatis"
+        />
+      </div>
+      <div v-if="selectedPaket" class="package-detail">
+        <h4>Detail Isi Paket</h4>
+        <p>
+          {{ selectedPaket.nama }} berisi:
+          <strong>{{ selectedPaket.isi.join(', ') }}</strong>
+        </p>
+        <p>Total: <strong>{{ selectedPaket.harga | rupiah }}</strong></p>
+      </div>
+      <p class="error" v-if="error">{{ error }}</p>
+      <button class="btn primary" type="submit">Simpan Delivery Order</button>
+    </form>
+
+    <div v-if="selected" class="tracking-card">
+      <div class="tracking-top">
+        <div>
+          <p class="eyebrow">{{ selected.nomor }}</p>
+          <h3>{{ selected.data.nama }} - {{ selected.data.nim }}</h3>
+        </div>
+        <span class="pill">{{ selected.data.status }}</span>
+      </div>
+      <p>
+        <strong>Ekspedisi:</strong> {{ selected.data.ekspedisi }} |
+        <strong>Tanggal:</strong> {{ selected.data.tanggalKirim | tanggalIndo }}
+        | <strong>Total:</strong> {{ selected.data.total | rupiah }}
+      </p>
+      <p><strong>Paket:</strong> {{ getPaketName(selected.data.paket) }}</p>
+      <p>
+        <strong>Detail Pengiriman:</strong> {{ selected.data.detailPengiriman ||
+        'Detail pengiriman belum tersedia.' }}
+      </p>
+      <h4>Progress Perjalanan</h4>
+      <ol class="timeline">
+        <li v-for="(p, i) in selected.data.perjalanan" :key="i">
+          <strong>{{ p.waktu }}</strong><br />{{ p.keterangan }}
+        </li>
+      </ol>
+      <div class="search-box">
+        <input
+          v-model.trim="progressText"
+          @keyup.enter="submitProgress"
+          placeholder="Tambah keterangan progress"
+        />
+        <button type="button" class="btn primary" @click="submitProgress">
+          Tambah Progress
+        </button>
+      </div>
+    </div>
+    <p v-if="message" class="error">{{ message }}</p>
+
+    <div class="ordered-section">
+      <div class="panel-head compact">
+        <div>
+          <p class="eyebrow">Daftar Pemesanan DO</p>
+          <h3>Mahasiswa yang Sudah Memesan</h3>
+        </div>
+        <span class="pill">{{ orderedList.length }} DO</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nomor DO</th>
+              <th>NIM / Nama</th>
+              <th>Paket</th>
+              <th>Ekspedisi</th>
+              <th>Tanggal Kirim</th>
+              <th>Status</th>
+              <th>Total</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in orderedList" :key="item.nomor">
+              <td><strong>{{ item.nomor }}</strong></td>
+              <td>
+                <strong>{{ item.data.nim }}</strong
+                ><span>{{ item.data.nama }}</span>
+              </td>
+              <td>{{ getPaketName(item.data.paket) }}</td>
+              <td>{{ item.data.ekspedisi }}</td>
+              <td>{{ item.data.tanggalKirim | tanggalIndo }}</td>
+              <td><span class="pill small">{{ item.data.status }}</span></td>
+              <td>{{ item.data.total | rupiah }}</td>
+              <td>
+                <button type="button" class="icon" @click="pilihDO(item)">
+                  Lihat Detail
+                </button>
+              </td>
+            </tr>
+            <tr v-if="orderedList.length === 0">
+              <td colspan="8" class="empty">Belum ada pemesanan DO.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</template>
