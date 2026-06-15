@@ -1,0 +1,12 @@
+<template id="tpl-modal"
+  ><div class="modal-mask" v-if="show">
+    <div class="modal">
+      <h3>{{ title }}</h3>
+      <p>{{ message }}</p>
+      <div class="actions">
+        <button class="btn danger" @click="confirm">Ya, hapus</button
+        ><button class="btn ghost" @click="close">Batal</button>
+      </div>
+    </div>
+  </div></template
+>
