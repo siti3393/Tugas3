@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SITTA UT - Pemesanan Bahan Ajar</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Universitas Terbuka</p>
+          <h1>SITTA - Sistem Pemesanan Bahan Ajar</h1>
+          <p>
+            Kelola stok bahan ajar, buat Delivery Order, dan pantau pengiriman
+            dalam satu dashboard Vue.js.
+          </p>
+        </div>
+        <div class="hero-card">
+          <span>Total Stok</span>
+          <strong>{{ totalQty | satuanBuah }}</strong>
+        </div>
+      </header>
+
+      <nav class="tabs">
+        <button :class="{active: tab === 'stok'}" @click="tab='stok'">
+          Stok Bahan Ajar
+        </button>
+        <button :class="{active: tab === 'tracking'}" @click="tab='tracking'">
+          Tracking DO
+        </button>
+        <button :class="{active: tab === 'order'}" @click="tab='order'">
+          Pemesanan
+        </button>
+      </nav>
+
+      <main>
+        <section v-show="tab === 'stok'">
+          <ba-stock-table
+            :items="state.stok"
+            :upbjj-list="state.upbjjList"
+            :kategori-list="state.kategoriList"
+            @create="addStock"
+            @update="updateStock"
+            @delete="askDeleteStock"
+          >
+          </ba-stock-table>
+        </section>
+
+        <section v-show="tab === 'tracking'">
+          <do-tracking
+            :tracking="state.tracking"
+            :paket="state.paket"
+            :pengiriman-list="state.pengirimanList"
+            @add-progress="addProgress"
+            @created="addOrder"
+          >
+          </do-tracking>
+        </section>
+
+        <section v-show="tab === 'order'">
+          <order-form
+            :tracking="state.tracking"
+            :paket="state.paket"
+            :pengiriman-list="state.pengirimanList"
+            @created="addOrder"
+          >
+          </order-form>
+        </section>
+      </main>
+
+      <app-modal ref="modal"></app-modal>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script>
+      // Memuat template dari folder /templates agar struktur proyek sesuai catatan tugas.
+      async function loadTemplates() {
+        const files = [
+          "templates/stock-table.html",
+          "templates/do-tracking.html",
+          "templates/order-form.html",
+          "templates/status-badge.html",
+          "templates/app-modal.html",
+        ];
+
+        for (const file of files) {
+          const response = await fetch(file);
+          if (!response.ok) {
+            throw new Error("Template gagal dimuat: " + file);
+          }
+          const html = await response.text();
+          document.body.insertAdjacentHTML("beforeend", html);
+        }
+      }
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          script.onload = resolve;
+          script.onerror = () =>
+            reject(new Error("Script gagal dimuat: " + src));
+          document.body.appendChild(script);
+        });
+      }
+
+      loadTemplates()
+        .then(() => loadScript("js/services/api.js"))
+        .then(() => loadScript("js/components/status-badge.js"))
+        .then(() => loadScript("js/components/app-modal.js"))
+        .then(() => loadScript("js/components/stock-table.js"))
+        .then(() => loadScript("js/components/do-tracking.js"))
+        .then(() => loadScript("js/components/order-form.js"))
+        .then(() => loadScript("js/app.js"))
+        .catch((error) => {
+          console.error(error);
+          alert(
+            "Gagal memuat template atau script. Jalankan aplikasi menggunakan Live Server/localhost.",
+          );
+        });
+    </script>
+  </body>
+</html>
